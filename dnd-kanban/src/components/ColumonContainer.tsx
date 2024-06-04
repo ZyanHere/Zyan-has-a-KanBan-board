@@ -1,14 +1,15 @@
-import { useSortable } from "@dnd-kit/sortable";
+import { SortableContext, useSortable } from "@dnd-kit/sortable";
 import PlusIcon from "../icons/PlusIcon";
 import TrashIcon from "../icons/TrashIcon";
 import { Column, Id, Task } from "../types";
 import {CSS} from "@dnd-kit/utilities";
+import { useState } from "react";
+import TaskCard from "./TaskCard";
 
 interface Props {
   column: Column;
   deleteColumn: (id: Id) => void;
   updateColumn: (id: Id, title: string) => void;
-
   createTask: (columnId: Id) => void;
   updateTask: (id: Id, content: string) => void;
   deleteTask: (id: Id) => void;
@@ -24,6 +25,8 @@ function ColumnContainer(props: Props) {
     deleteTask,
     updateTask,} = props;
 
+    const [editMode, setEditMode] = useState(false);
+
     const {
         setNodeRef,
         attributes,
@@ -37,6 +40,7 @@ function ColumnContainer(props: Props) {
           type: "Column",
           column,
         },
+        disabled: editMode,
       });
 
       const style = {
@@ -75,6 +79,7 @@ function ColumnContainer(props: Props) {
       {...attributes}
       {...listeners}
         onClick={() => {
+          setEditMode(true);
         }}
         className=" bg-mainBackgroundColor text-md h-[60px] cursor-grab rounded-md rounded-b-none p-3
       font-bold border-columnBackgroundColor border-4 flex items-center justify-between"
@@ -85,18 +90,22 @@ function ColumnContainer(props: Props) {
           >
             0
           </div>
+          {!editMode && column.title}
+          {editMode && (
             <input
               className="bg-black focus:border-rose-500 border rounded outline-none px-2"
               value={column.title}
-              onChange={(e) =>}
+              onChange={(e) => updateColumn(column.id, e.target.value)}
               autoFocus
               onBlur={() => {
-                // setEditMode(false);
+                setEditMode(false);
               }}
               onKeyDown={(e) => {
                 if (e.key !== "Enter") return;
+                setEditMode(false);
               }}
             />
+          )}
         </div>
         <button
           onClick={() => {
@@ -109,12 +118,22 @@ function ColumnContainer(props: Props) {
 
       {/* Column task container */}
       <div className="flex flex-grow flex-col gap-4 p-2 overflow-x-hidden overflow-y-auto">
-        
+        <SortableContext items={}>
+          {tasks.map((task) => (
+            <TaskCard
+              key={task.id}
+              task={task}
+              deleteTask={deleteTask}
+              updateTask={updateTask}
+            />
+          ))}
+        </SortableContext>
       </div>
       {/* Column footer */}
       <button
         className="flex gap-2 items-center border-columnBackgroundColor border-2 rounded-md p-4 border-x-columnBackgroundColor hover:bg-mainBackgroundColor hover:text-rose-500 active:bg-black"
         onClick={() => {
+          createTask(column.id);
         }}
       >
         <PlusIcon />
